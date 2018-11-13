@@ -19,5 +19,7 @@ db.authenticate()
 db.sync()
 
 module.exports = {
-  db
+  db,
+  User,
+  UserDetails
 }
