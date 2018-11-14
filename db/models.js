@@ -7,7 +7,7 @@ const UserModel = {
     primaryKey: true,
     defaultValue: DT.UUIDV1
   },
-  username: {
+  email: {
     type: DT.STRING(45),
     unique: true,
     allowNull: false
@@ -20,7 +20,7 @@ const UserModel = {
 
 const UserDetailModel = {
   user_id: DT.UUID,
-	email: {
+	username: {
     type: DT.STRING(45),
     unique: true,
     allowNull: false

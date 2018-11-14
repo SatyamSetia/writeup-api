@@ -13,14 +13,14 @@ route.post('/', validateUsername, validatePassword, validateEmail , async (req, 
 
   try {
     const newUser = await User.create({
-      username: req.body.username,
+      email: req.body.email,
       password: hashedPassword,
       user_id: userId,
     })
 
     const newUserDetails = await UserDetails.create({
       user_id: userId,
-      email: req.body.email
+      username: req.body.username
     })
 
     const token = generateToken(userId);
@@ -28,8 +28,8 @@ route.post('/', validateUsername, validatePassword, validateEmail , async (req, 
     res.status(201).json({
       user: {
         token: token,
-        email: newUserDetails.email,
-        username: newUser.username,
+        email: newUser.email,
+        username: newUserDetails.username,
         bio: null,
         image: null
       }
@@ -42,6 +42,10 @@ route.post('/', validateUsername, validatePassword, validateEmail , async (req, 
     })
   }
 
+})
+
+route.post('/login', async (req, res) => {
+  res.send(200)
 })
 
 module.exports = route;
