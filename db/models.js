@@ -7,13 +7,24 @@ const UserModel = {
     primaryKey: true,
     defaultValue: DT.UUIDV1
   },
-  username: DT.STRING(45),
-	password: DT.STRING(45)
+  username: {
+    type: DT.STRING(45),
+    unique: true,
+    allowNull: false
+  },
+	password: {
+    type: DT.STRING(45),
+    allowNull: false
+  }
 }
 
 const UserDetailModel = {
   user_id: DT.UUID,
-	email: DT.STRING(45),
+	email: {
+    type: DT.STRING(45),
+    unique: true,
+    allowNull: false
+  },
   bio: DT.STRING(200),
   image: DT.STRING(200)
 }

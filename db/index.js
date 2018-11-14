@@ -15,7 +15,6 @@ const UserDetails = db.define('userDetail', UserDetailModel);
 UserDetails.belongsTo(User,{foreignKey: 'user_id'});
 User.hasOne(UserDetails,{foreignKey: 'user_id'});
 
-db.authenticate()
 db.sync()
 
 module.exports = {

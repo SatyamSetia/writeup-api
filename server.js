@@ -6,8 +6,7 @@ app.use(express.urlencoded({
   extended: true
 }))
 
-app.use('/',require('./routes/index'))
-app.use('/user', require('./routes/user'))
+app.use('/api/users', require('./routes/user'))
 
 app.listen(8080,() => {
   console.log('Server started on http://localhost:8080')

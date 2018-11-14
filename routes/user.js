@@ -1,29 +1,47 @@
 const route = require('express').Router();
-const { User, UserDetails }  = require('../db/index');
 
-route.post('/', async (req, res) => {
+const { User, UserDetails }  = require('../db/index');
+const { encryptPassword }  = require('../services/bcrypt');
+const { generateToken } = require('../services/jwt');
+const { generateUUID } = require('../services/uuidService');
+const  { validateUsername, validatePassword, validateEmail } = require('../middlewares');
+
+route.post('/', validateUsername, validatePassword, validateEmail , async (req, res) => {
+
+  const userId = await generateUUID();
+  const hashedPassword = encryptPassword(req.body.password);
+
   try {
     const newUser = await User.create({
       username: req.body.username,
-      password: req.body.password,
-      user_id: req.body.user_id
+      password: hashedPassword,
+      user_id: userId,
     })
 
     const newUserDetails = await UserDetails.create({
-      user_id: newUser.user_id,
-      email: req.body.email,
-      bio: req.body.bio,
-      image: req.body.image
+      user_id: userId,
+      email: req.body.email
+    })
+
+    const token = generateToken(userId);
+
+    res.status(201).json({
+      user: {
+        token: token,
+        email: newUserDetails.email,
+        username: newUser.username,
+        bio: null,
+        image: null
+      }
     })
   } catch(err) {
-    res.send(500).json({
-      message: 'LOL.. Internal Server Error'
+    res.status(500).json({
+      errors: {
+        message: ["Something went wrong"]
+      }
     })
   }
 
-  res.status(201).json({
-    message: 'User registered'
-  })
 })
 
 module.exports = route;
