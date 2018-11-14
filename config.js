@@ -1,3 +1,4 @@
 module.exports = {
-  'secret': 'yek-terces-puetirw'
+  'secret': 'yek-terces-puetirw',
+  'sessionSecret': 'random'
 };

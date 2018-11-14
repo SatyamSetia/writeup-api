@@ -1,10 +1,23 @@
 const express = require('express');
+const expressSession = require('express-session');
+const flash = require('connect-flash');
+
+const passport = require('./auth');
+const config = require('./config');
+
 const app = express();
 
 app.use(express.json())
 app.use(express.urlencoded({
   extended: true
 }))
+
+app.use(expressSession({
+	secret: config.sessionSecret,
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
 
 app.use('/api/users', require('./routes/user'))
 
