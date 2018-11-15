@@ -121,7 +121,7 @@ route.get('/error', (req, res) => {
   });
 })
 
-route.put('/user', async (req, res) => {
+route.put('/user', validateUsername, validatePassword, async (req, res) => {
 
   const decryptedToken = getIdFromToken(req.headers.token);
   if(decryptedToken.error) {
