@@ -14,13 +14,13 @@ route.post('/users', validateUsername, validatePassword, validateEmail , async (
 
   try {
     const newUser = await User.create({
-      email: req.body.email,
       password: hashedPassword,
       user_id: userId,
     })
 
     const newUserDetails = await UserDetails.create({
       user_id: userId,
+      email: req.body.email,
       username: req.body.username
     })
 
@@ -29,7 +29,7 @@ route.post('/users', validateUsername, validatePassword, validateEmail , async (
     res.status(201).json({
       user: {
         token: token,
-        email: newUser.email,
+        email: newUserDetails.email,
         username: newUserDetails.username,
         bio: null,
         image: null
@@ -57,11 +57,9 @@ route.get('/user', (req, res) => {
 
   let user_id, email;
 
-  if(!req.headers.token) {
-
+  if(req.user) {
     user_id = req.user.dataValues.user_id;
     email = req.user.dataValues.email
-
   } else {
     const decryptedToken = getIdFromToken(req.headers.token);
     if(decryptedToken.error) {
@@ -72,18 +70,6 @@ route.get('/user', (req, res) => {
       })
     } else {
       user_id = decryptedToken.id;
-
-      try {
-        User.findByPrimary(user_id).then(user => {
-          email = user.email
-        })
-      } catch(err) {
-        return res.status(500).json({
-          errors: {
-            message: ["Something went wrong"]
-          }
-        })
-      }
     }
   }
 
@@ -98,8 +84,8 @@ route.get('/user', (req, res) => {
 
       res.status(200).json({
         user: {
-          email,
           token,
+          email: userDetail.email,
           username: userDetail.username,
           bio: userDetail.bio,
           image: userDetail.image
@@ -132,7 +118,6 @@ route.put('/user', validateUsername, validatePassword, async (req, res) => {
     })
   } else {
     const user = await User.findByPrimary(decryptedToken.id);
-    console.log
     const userDetail = await UserDetails.findOne({
       where: {
         user_id: user.user_id
@@ -140,7 +125,7 @@ route.put('/user', validateUsername, validatePassword, async (req, res) => {
     })
 
     if(req.body.email) {
-      user.email = req.body.email
+      userDetail.email = req.body.email
     }
     if(req.body.password) {
       user.password = encryptPassword(req.body.password)
@@ -161,7 +146,7 @@ route.put('/user', validateUsername, validatePassword, async (req, res) => {
 
       return res.status(200).json({
         user: {
-          email: updatedUser.email,
+          email: updatedUserDetails.email,
           token: req.headers.token,
           username: updatedUserDetails.username,
           bio: updatedUserDetails.bio,
