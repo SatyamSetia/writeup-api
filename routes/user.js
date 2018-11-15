@@ -121,4 +121,61 @@ route.get('/error', (req, res) => {
   });
 })
 
+route.put('/user', async (req, res) => {
+
+  const decryptedToken = getIdFromToken(req.headers.token);
+  if(decryptedToken.error) {
+    return res.status(401).json({
+      errors: {
+        message: ["Invalid Token"]
+      }
+    })
+  } else {
+    const user = await User.findByPrimary(decryptedToken.id);
+    console.log
+    const userDetail = await UserDetails.findOne({
+      where: {
+        user_id: user.user_id
+      }
+    })
+
+    if(req.body.email) {
+      user.email = req.body.email
+    }
+    if(req.body.password) {
+      user.password = encryptPassword(req.body.password)
+    }
+    if(req.body.username) {
+      userDetail.username = req.body.username
+    }
+    if(req.body.bio) {
+      userDetail.bio = req.body.bio
+    }
+    if(req.body.image) {
+      userDetail.image = req.body.image
+    }
+
+    try {
+      const updatedUser = await user.save();
+      const updatedUserDetails = await userDetail.save();
+
+      return res.status(200).json({
+        user: {
+          email: updatedUser.email,
+          token: req.headers.token,
+          username: updatedUserDetails.username,
+          bio: updatedUserDetails.bio,
+          image: updatedUserDetails.image
+        }
+      })
+    } catch(err) {
+      res.status(500).json({
+        errors: {
+          message: err.message
+        }
+      })
+    }
+  }
+})
+
 module.exports = route;
