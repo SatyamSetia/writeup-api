@@ -2,12 +2,12 @@ const route = require('express').Router();
 
 const { User, UserDetails }  = require('../db/index');
 const { encryptPassword }  = require('../services/bcrypt');
-const { generateToken } = require('../services/jwt');
+const { generateToken, getIdFromToken } = require('../services/jwt');
 const { generateUUID } = require('../services/uuidService');
 const  { validateUsername, validatePassword, validateEmail } = require('../middlewares');
 const passport = require('../auth');
 
-route.post('/', validateUsername, validatePassword, validateEmail , async (req, res) => {
+route.post('/users', validateUsername, validatePassword, validateEmail , async (req, res) => {
 
   const userId = await generateUUID();
   const hashedPassword = encryptPassword(req.body.password);
@@ -45,17 +45,47 @@ route.post('/', validateUsername, validatePassword, validateEmail , async (req, 
 
 })
 
-route.post('/login',
+route.post('/users/login',
   passport.authenticate('local', {
-    successRedirect: '/api/users/profile',
-    failureRedirect: '/api/users/error',
+    successRedirect: '../user',
+    failureRedirect: '../error',
     failureFlash: true
   })
 );
 
-route.get('/profile', (req, res) => {
+route.get('/user', (req, res) => {
 
-  const { user_id, email } = req.user.dataValues;
+  let user_id, email;
+
+  if(!req.headers.token) {
+
+    user_id = req.user.dataValues.user_id;
+    email = req.user.dataValues.email
+
+  } else {
+    const decryptedToken = getIdFromToken(req.headers.token);
+    if(decryptedToken.error) {
+      return res.status(401).json({
+        errors: {
+          message: ["Invalid Token"]
+        }
+      })
+    } else {
+      user_id = decryptedToken.id;
+
+      try {
+        User.findByPrimary(user_id).then(user => {
+          email = user.email
+        })
+      } catch(err) {
+        return res.status(500).json({
+          errors: {
+            message: ["Something went wrong"]
+          }
+        })
+      }
+    }
+  }
 
   try {
     UserDetails.findOne({

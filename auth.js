@@ -20,10 +20,10 @@ passport.use(new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password'
   },
-  function(username, password, done) {
+  function(email, password, done) {
     User.findOne({
   		where: {
-  			email: username
+  			email: email
   		}
   	}).then((user)=>{
   		if(!user){
