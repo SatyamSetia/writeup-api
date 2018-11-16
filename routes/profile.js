@@ -5,11 +5,27 @@ const { getIdFromToken } = require('../services/jwt');
 
 route.get('/:username', async (req, res) => {
 
-  const followingUserDetails = await UserDetails.findOne({
-    where: {
-      username: req.params.username
+  let followingUserDetails;
+
+  try {
+    followingUserDetails = await UserDetails.findOne({
+      where: {
+        username: req.params.username
+      }
+    });
+
+    if(!followingUserDetails) {
+      throw {
+        message: `User with username ${req.params.username} does not exists`
+      }
     }
-  });
+  } catch(err) {
+    return res.status(400).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
 
   if(req.headers.token) {
 
@@ -22,11 +38,24 @@ route.get('/:username', async (req, res) => {
         }
       })
     } else {
-      const followerUser = await User.findByPrimary(decryptedToken.id);
 
-      const followingUser = await User.findByPrimary(followingUserDetails.user_id);
+      let isFollowing;
 
-      let isFollowing = await followingUser.hasFollower(followerUser);
+      try {
+
+        const followerUser = await User.findByPrimary(decryptedToken.id);
+
+        const followingUser = await User.findByPrimary(followingUserDetails.user_id);
+
+        isFollowing = await followingUser.hasFollower(followerUser);
+
+      } catch(err) {
+        return res.status(500).json({
+          errors: {
+            message: err.message
+          }
+        })
+      }
 
       return res.status(200).json({
         profile: {
