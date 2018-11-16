@@ -45,16 +45,7 @@ passport.use(new LocalStrategy({
 
 				return done(null,userDetails);
 			})
-
-			// User.findByPrimary(userDetails.user_id).then(user => {
-			// 	if(!isPasswordValid(password, user.dataValues.password)) {
-	    //     return done(null, false, {
-	    //       message: 'Incorrect password'
-	    //     })
-	    //   }
-			//
-			// 	return done(null,user);
-			// })
+			
 		}).catch((err)=>{
       console.log(err)
   		done(err)

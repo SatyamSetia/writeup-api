@@ -66,8 +66,21 @@ const validateEmail = (req, res, next) => {
   next();
 }
 
+const ensureTokenInHeader = (req, res, next) => {
+  if(!req.headers.token) {
+    return res.status(401).json({
+      error: {
+        message: 'Unauthorized Access. Token is absent in headers'
+      }
+    })
+  }
+
+  next();
+}
+
 module.exports = {
   validateUsername,
   validatePassword,
-  validateEmail
+  validateEmail,
+  ensureTokenInHeader
 }

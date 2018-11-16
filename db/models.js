@@ -42,16 +42,22 @@ const ArticleModel = {
   title: DT.STRING(100),
   description: DT.STRING(200),
   body: DT.STRING(1000),
-  favoritesCount: DT.INTEGER,
-  tags: [
-    {
-      type: DT.STRING(45)
-    }
-  ]
+  favoritesCount: {
+    type: DT.INTEGER,
+    defaultValue: 0
+  }
+}
+
+const TagModel = {
+  tagName: {
+    type: DT.STRING(20),
+    primaryKey: true
+  }
 }
 
 module.exports = {
   UserModel,
   UserDetailModel,
-  ArticleModel
+  ArticleModel,
+  TagModel
 }
