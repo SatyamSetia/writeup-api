@@ -15,6 +15,9 @@ const UserDetails = db.define('userDetail', UserDetailModel);
 UserDetails.belongsTo(User,{foreignKey: 'user_id'});
 User.hasOne(UserDetails,{foreignKey: 'user_id'});
 
+User.belongsToMany(User, {as: 'follower',foreignKey: 'followingId',through: 'connection'})
+User.belongsToMany(User, {as: 'following',foreignKey: 'followerId',through: 'connection'})
+
 db.sync()
 
 module.exports = {
