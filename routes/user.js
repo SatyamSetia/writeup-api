@@ -13,15 +13,16 @@ route.post('/users', validateUsername, validatePassword, validateEmail , async (
   const hashedPassword = encryptPassword(req.body.password);
 
   try {
-    const newUser = await User.create({
-      password: hashedPassword,
-      user_id: userId,
-    })
 
     const newUserDetails = await UserDetails.create({
       user_id: userId,
       email: req.body.email,
       username: req.body.username
+    })
+
+    const newUser = await User.create({
+      password: hashedPassword,
+      user_id: userId,
     })
 
     const token = generateToken(userId);
@@ -38,7 +39,7 @@ route.post('/users', validateUsername, validatePassword, validateEmail , async (
   } catch(err) {
     res.status(500).json({
       errors: {
-        message: ["Something went wrong"]
+        message: err.message
       }
     })
   }
@@ -60,6 +61,7 @@ route.get('/user', (req, res) => {
   if(req.user) {
     user_id = req.user.dataValues.user_id;
     email = req.user.dataValues.email
+    req.session.destroy()
   } else {
     const decryptedToken = getIdFromToken(req.headers.token);
     if(decryptedToken.error) {
@@ -74,15 +76,11 @@ route.get('/user', (req, res) => {
   }
 
   try {
-    UserDetails.findOne({
-      where: {
-        user_id: user_id
-      }
-    }).then( (userDetail) => {
+    UserDetails.findByPk(user_id).then( (userDetail) => {
 
       const token = generateToken(user_id);
 
-      res.status(200).json({
+      return res.status(200).json({
         user: {
           token,
           email: userDetail.email,
@@ -93,7 +91,7 @@ route.get('/user', (req, res) => {
       })
     })
   } catch(err) {
-    res.status(500).json({
+    return res.status(500).json({
       errors: {
         message: ["Something went wrong"]
       }
@@ -117,10 +115,11 @@ route.put('/user', validateUsername, validatePassword, async (req, res) => {
       }
     })
   } else {
-    const user = await User.findByPrimary(decryptedToken.id);
-    const userDetail = await UserDetails.findOne({
+    const userDetail = await UserDetails.findByPk(decryptedToken.id);
+
+    const user = await User.findOne({
       where: {
-        user_id: user.user_id
+        user_id: userDetail.user_id
       }
     })
 

@@ -21,6 +21,7 @@ app.use(flash());
 
 app.use('/api', require('./routes/user'))
 app.use('/api/profiles', require('./routes/profile'));
+app.use('/api/articles', require('./routes/article'));
 
 app.listen(8080,() => {
   console.log('Server started on http://localhost:8080')

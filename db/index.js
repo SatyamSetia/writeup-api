@@ -1,7 +1,8 @@
 const Sequelize = require('sequelize');
 const {
   UserModel,
-  UserDetailModel
+  UserDetailModel,
+  ArticleModel
 } = require('./models');
 
 const db = new Sequelize({
@@ -11,17 +12,19 @@ const db = new Sequelize({
 
 const User = db.define('user', UserModel);
 const UserDetails = db.define('userDetail', UserDetailModel);
+const Article = db.define('article', ArticleModel);
 
-UserDetails.belongsTo(User,{foreignKey: 'user_id'});
-User.hasOne(UserDetails,{foreignKey: 'user_id'});
+User.belongsTo(UserDetails,{foreignKey: 'user_id'});
+UserDetails.hasOne(User,{foreignKey: 'user_id'});
 
-User.belongsToMany(User, {as: 'follower',foreignKey: 'followingId',through: 'connection'})
-User.belongsToMany(User, {as: 'following',foreignKey: 'followerId',through: 'connection'})
+UserDetails.belongsToMany(UserDetails, {as: 'follower',foreignKey: 'followingId',through: 'connection'})
+UserDetails.belongsToMany(UserDetails, {as: 'following',foreignKey: 'followerId',through: 'connection'})
 
 db.sync()
 
 module.exports = {
   db,
   User,
-  UserDetails
+  UserDetails,
+  Article
 }

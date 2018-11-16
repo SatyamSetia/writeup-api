@@ -43,9 +43,9 @@ route.get('/:username', async (req, res) => {
 
       try {
 
-        const followerUser = await User.findByPrimary(decryptedToken.id);
+        const followerUser = await UserDetails.findByPrimary(decryptedToken.id);
 
-        const followingUser = await User.findByPrimary(followingUserDetails.user_id);
+        const followingUser = await UserDetails.findByPrimary(followingUserDetails.user_id);
 
         isFollowing = await followingUser.hasFollower(followerUser);
 
@@ -98,23 +98,21 @@ route.post('/:username/follow', async (req, res) => {
     }
 
     try {
-      const followerUser = await User.findByPrimary(user_id);
+      const followerUser = await UserDetails.findByPrimary(user_id);
 
-      const followingUserDetails = await UserDetails.findOne({
+      const followingUser = await UserDetails.findOne({
         where: {
           username: req.params.username
         }
       });
 
-      const followingUser = await User.findByPrimary(followingUserDetails.user_id);
-
       followingUser.addFollower(followerUser);
 
       return res.status(200).json({
         profile: {
-          username: followingUserDetails.username,
-          bio: followingUserDetails.bio,
-          image: followingUserDetails.image,
+          username: followingUser.username,
+          bio: followingUser.bio,
+          image: followingUser.image,
           following: true
         }
       })
@@ -153,23 +151,21 @@ route.delete('/:username/follow', async (req, res) => {
     }
 
     try {
-      const followerUser = await User.findByPrimary(user_id);
+      const followerUser = await UserDetails.findByPrimary(user_id);
 
-      const followingUserDetails = await UserDetails.findOne({
+      const followingUser = await UserDetails.findOne({
         where: {
           username: req.params.username
         }
       });
 
-      const followingUser = await User.findByPrimary(followingUserDetails.user_id);
-
       followingUser.removeFollower(followerUser);
 
       return res.status(200).json({
         profile: {
-          username: followingUserDetails.username,
-          bio: followingUserDetails.bio,
-          image: followingUserDetails.image,
+          username: followingUser.username,
+          bio: followingUser.bio,
+          image: followingUser.image,
           following: false
         }
       })
