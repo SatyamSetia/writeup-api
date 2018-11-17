@@ -1,6 +1,6 @@
 const route = require('express').Router();
 
-const { Article, Tags }  = require('../db/index');
+const { Article, Tags, UserDetails }  = require('../db/index');
 const { ensureTokenInHeader } = require('../middlewares');
 const { getIdFromToken } = require('../services/jwt');
 const { createSlug } = require('../services/slugService');
@@ -74,6 +74,80 @@ route.post('/', ensureTokenInHeader, async (req, res) => {
     }
 
   }
+})
+
+route.get('/:slug', async (req, res) => {
+
+  let userDetails = undefined;
+
+  if(req.headers.token) {
+    const decryptedToken = getIdFromToken(req.headers.token);
+    if(decryptedToken.error) {
+      return res.status(401).json({
+        errors: {
+          message: ["Invalid Token"]
+        }
+      })
+    }
+
+    try {
+      userDetails = await UserDetails.findByPk(decryptedToken.id);
+    } catch(err) {
+      return res.status(500).json({
+          errors: {
+            message: err.message
+          }
+      })
+    }
+  }
+
+  let article;
+
+  try {
+    article  = await Article.findOne({
+      where: {
+        slug: req.params.slug
+      },
+      include: [{
+        model: UserDetails,
+        as: 'author',
+        attributes: ['username','bio','image']
+      }]
+    })
+    if(!article) {
+      throw {
+        message: 'Article not found'
+      }
+    }
+  } catch(err) {
+    return res.status(500).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
+
+  const authorDetails = await article.getAuthor();
+
+  let isFollowing = false;
+  if(userDetails) {
+    isFollowing = await authorDetails.hasFollower(userDetails);
+  }
+
+  const tags = (await article.getTags()).map(tag => {
+    return tag.tagName
+  })
+
+  article = article.toJSON();
+  article.favorited = false;
+  article.tagList = tags;
+  article.article_id = undefined;
+  article.user_id = undefined;
+  article.author.following = isFollowing;
+
+  res.status(200).json({
+    article
+  })
 })
 
 module.exports = route;
