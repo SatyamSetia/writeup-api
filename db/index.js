@@ -28,6 +28,9 @@ Tags.belongsToMany(Article, {foreignKey: 'tagName', through: 'ArticleTag'})
 UserDetails.hasMany(Article, {foreignKey: 'user_id'})
 Article.belongsTo(UserDetails, {as: 'author', foreignKey: 'user_id'})
 
+Article.belongsToMany(UserDetails, {as:'favoritedBy', foreignKey: 'article_id', through: 'Favorite'})
+UserDetails.belongsToMany(Article, {as:'favoritedArticles', foreignKey: 'user_id', through: 'Favorite'})
+
 db.sync()
 
 module.exports = {

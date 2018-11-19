@@ -150,4 +150,174 @@ route.get('/:slug', async (req, res) => {
   })
 })
 
+// route.get('/', (req, res) => {
+//   try {
+//
+//   } catch(err) {
+//     return res.status(500).json({
+//       errors: {
+//         message: err.message
+//       }
+//     })
+//   }
+// })
+
+route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
+  const decryptedToken = getIdFromToken(req.headers.token);
+  if(decryptedToken.error) {
+    return res.status(401).json({
+      errors: {
+        message: ["Invalid Token"]
+      }
+    })
+  }
+
+  let userDetails;
+  try {
+    userDetails = await UserDetails.findByPk(decryptedToken.id);
+  } catch(err) {
+    return res.status(500).json({
+        errors: {
+          message: err.message
+        }
+    })
+  }
+
+  let article;
+
+  try {
+    article  = await Article.findOne({
+      where: {
+        slug: req.params.slug
+      },
+      include: [{
+        model: UserDetails,
+        as: 'author',
+        attributes: ['username','bio','image']
+      }]
+    })
+    if(!article) {
+      throw {
+        message: 'Article not found'
+      }
+    }
+  } catch(err) {
+    return res.status(500).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
+  const authorDetails = await article.getAuthor();
+
+  if(authorDetails.user_id === userDetails.user_id) {
+    return res.status(403).json({
+      error: {
+        message: 'Article can not be favorited by author'
+      }
+    })
+  }
+
+  await article.addFavoritedBy(userDetails);
+
+  let isFollowing = false;
+  if(userDetails) {
+    isFollowing = await authorDetails.hasFollower(userDetails);
+  }
+
+  const tags = (await article.getTags()).map(tag => {
+    return tag.tagName
+  })
+
+  article = article.toJSON();
+  article.favorited = true;
+  article.tagList = tags;
+  article.article_id = undefined;
+  article.user_id = undefined;
+  article.author.following = isFollowing;
+
+  return res.status(200).json({
+    article
+  })
+})
+
+route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
+  const decryptedToken = getIdFromToken(req.headers.token);
+  if(decryptedToken.error) {
+    return res.status(401).json({
+      errors: {
+        message: ["Invalid Token"]
+      }
+    })
+  }
+
+  let userDetails;
+  try {
+    userDetails = await UserDetails.findByPk(decryptedToken.id);
+  } catch(err) {
+    return res.status(500).json({
+        errors: {
+          message: err.message
+        }
+    })
+  }
+
+  let article;
+
+  try {
+    article  = await Article.findOne({
+      where: {
+        slug: req.params.slug
+      },
+      include: [{
+        model: UserDetails,
+        as: 'author',
+        attributes: ['username','bio','image']
+      }]
+    })
+    if(!article) {
+      throw {
+        message: 'Article not found'
+      }
+    }
+  } catch(err) {
+    return res.status(500).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
+  const authorDetails = await article.getAuthor();
+
+  if(authorDetails.user_id === userDetails.user_id) {
+    return res.status(403).json({
+      error: {
+        message: 'Article can not be unfavorited by author'
+      }
+    })
+  }
+
+  await article.removeFavoritedBy(userDetails);
+
+  let isFollowing = false;
+  if(userDetails) {
+    isFollowing = await authorDetails.hasFollower(userDetails);
+  }
+
+  const tags = (await article.getTags()).map(tag => {
+    return tag.tagName
+  })
+
+  article = article.toJSON();
+  article.favorited = false;
+  article.tagList = tags;
+  article.article_id = undefined;
+  article.user_id = undefined;
+  article.author.following = isFollowing;
+
+  return res.status(200).json({
+    article
+  })
+})
+
 module.exports = route;
