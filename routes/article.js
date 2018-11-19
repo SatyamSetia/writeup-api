@@ -150,6 +150,102 @@ route.get('/:slug', async (req, res) => {
   })
 })
 
+route.put('/:slug', ensureTokenInHeader, async (req, res) => {
+  const decryptedToken = getIdFromToken(req.headers.token);
+  if(decryptedToken.error) {
+    return res.status(401).json({
+      errors: {
+        message: ["Invalid Token"]
+      }
+    })
+  } else {
+    let { title, description, body } = req.body.article;
+    let userDetails = undefined;
+
+    try {
+      userDetails = await UserDetails.findByPk(decryptedToken.id);
+    } catch(err) {
+      return res.status(500).json({
+          errors: {
+            message: err.message
+          }
+      })
+    }
+
+    try {
+      article  = await Article.findOne({
+        where: {
+          slug: req.params.slug
+        },
+        include: [{
+          model: UserDetails,
+          as: 'author',
+          attributes: ['username','bio','image']
+        }]
+      })
+      if(!article) {
+        throw {
+          message: 'Article not found'
+        }
+      }
+    } catch(err) {
+      return res.status(500).json({
+        errors: {
+          message: err.message
+        }
+      })
+    }
+
+    let authorDetails = await article.getAuthor();
+
+    if(authorDetails.user_id !== userDetails.user_id) {
+      return res.status(403).json({
+        error: {
+          message: 'Article can only be updated by author'
+        }
+      })
+    }
+
+    if(title) {
+      article.title = title;
+      article.slug = createSlug(title);
+    }
+
+    if(description) {
+      article.description = description;
+    }
+
+    if(body) {
+      article.body = body;
+    }
+
+    try {
+      let updatedArticle = await article.save();
+
+      const tags = (await updatedArticle.getTags()).map(tag => {
+        return tag.tagName
+      })
+
+      updatedArticle = updatedArticle.toJSON();
+      updatedArticle.favorited = false;
+      updatedArticle.tagList = tags;
+      updatedArticle.article_id = undefined;
+      updatedArticle.user_id = undefined;
+      updatedArticle.author.following = false;
+
+      return res.status(200).json({
+        article: updatedArticle
+      })
+    } catch(err) {
+      res.status(500).json({
+        errors: {
+          message: err.message
+        }
+      })
+    }
+  }
+})
+
 // route.get('/', (req, res) => {
 //   try {
 //
