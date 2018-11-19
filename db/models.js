@@ -55,9 +55,19 @@ const TagModel = {
   }
 }
 
+const CommentModel = {
+  comment_id: {
+    type: DT.UUID,
+    primaryKey: true,
+    defaultValue: DT.UUIDV1
+  },
+  body: DT.STRING(100)
+}
+
 module.exports = {
   UserModel,
   UserDetailModel,
   ArticleModel,
-  TagModel
+  TagModel,
+  CommentModel
 }

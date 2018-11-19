@@ -1,22 +1,40 @@
 const route = require('express').Router();
 
-const { Article, Tags, UserDetails }  = require('../db/index');
-const { ensureTokenInHeader } = require('../middlewares');
-const { getIdFromToken } = require('../services/jwt');
-const { createSlug } = require('../services/slugService');
-const { generateUUID } = require('../services/uuidService');
+const {
+  Article,
+  Tags,
+  UserDetails,
+  Comment
+} = require('../db/index');
+const {
+  ensureTokenInHeader
+} = require('../middlewares');
+const {
+  getIdFromToken
+} = require('../services/jwt');
+const {
+  createSlug
+} = require('../services/slugService');
+const {
+  generateUUID
+} = require('../services/uuidService');
 
 route.post('/', ensureTokenInHeader, async (req, res) => {
 
   const decryptedToken = getIdFromToken(req.headers.token);
-  if(decryptedToken.error) {
+  if (decryptedToken.error) {
     return res.status(401).json({
       errors: {
         message: ["Invalid Token"]
       }
     })
   } else {
-    const { title, description, body, tagList } = req.body.article;
+    const {
+      title,
+      description,
+      body,
+      tagList
+    } = req.body.article;
     const authorId = decryptedToken.id;
     const slug = createSlug(title);
     const article_id = generateUUID();
@@ -34,8 +52,8 @@ route.post('/', ensureTokenInHeader, async (req, res) => {
       await article.setAuthor(authorId)
       const author = await article.getAuthor();
 
-      if(tagList) {
-        for(let tag of tagList) {
+      if (tagList) {
+        for (let tag of tagList) {
           const newTag = await Tags.findOrCreate({
             where: {
               tagName: tag
@@ -65,7 +83,7 @@ route.post('/', ensureTokenInHeader, async (req, res) => {
         }
       })
 
-    } catch(err) {
+    } catch (err) {
       return res.status(500).json({
         errors: {
           message: err.message
@@ -80,9 +98,9 @@ route.get('/:slug', async (req, res) => {
 
   let userDetails = undefined;
 
-  if(req.headers.token) {
+  if (req.headers.token) {
     const decryptedToken = getIdFromToken(req.headers.token);
-    if(decryptedToken.error) {
+    if (decryptedToken.error) {
       return res.status(401).json({
         errors: {
           message: ["Invalid Token"]
@@ -92,11 +110,11 @@ route.get('/:slug', async (req, res) => {
 
     try {
       userDetails = await UserDetails.findByPk(decryptedToken.id);
-    } catch(err) {
+    } catch (err) {
       return res.status(500).json({
-          errors: {
-            message: err.message
-          }
+        errors: {
+          message: err.message
+        }
       })
     }
   }
@@ -104,22 +122,22 @@ route.get('/:slug', async (req, res) => {
   let article;
 
   try {
-    article  = await Article.findOne({
+    article = await Article.findOne({
       where: {
         slug: req.params.slug
       },
       include: [{
         model: UserDetails,
         as: 'author',
-        attributes: ['username','bio','image']
+        attributes: ['username', 'bio', 'image']
       }]
     })
-    if(!article) {
+    if (!article) {
       throw {
         message: 'Article not found'
       }
     }
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       errors: {
         message: err.message
@@ -130,7 +148,7 @@ route.get('/:slug', async (req, res) => {
   const authorDetails = await article.getAuthor();
 
   let isFollowing = false;
-  if(userDetails) {
+  if (userDetails) {
     isFollowing = await authorDetails.hasFollower(userDetails);
   }
 
@@ -152,43 +170,47 @@ route.get('/:slug', async (req, res) => {
 
 route.put('/:slug', ensureTokenInHeader, async (req, res) => {
   const decryptedToken = getIdFromToken(req.headers.token);
-  if(decryptedToken.error) {
+  if (decryptedToken.error) {
     return res.status(401).json({
       errors: {
         message: ["Invalid Token"]
       }
     })
   } else {
-    let { title, description, body } = req.body.article;
+    let {
+      title,
+      description,
+      body
+    } = req.body.article;
     let userDetails = undefined;
 
     try {
       userDetails = await UserDetails.findByPk(decryptedToken.id);
-    } catch(err) {
+    } catch (err) {
       return res.status(500).json({
-          errors: {
-            message: err.message
-          }
+        errors: {
+          message: err.message
+        }
       })
     }
 
     try {
-      article  = await Article.findOne({
+      article = await Article.findOne({
         where: {
           slug: req.params.slug
         },
         include: [{
           model: UserDetails,
           as: 'author',
-          attributes: ['username','bio','image']
+          attributes: ['username', 'bio', 'image']
         }]
       })
-      if(!article) {
+      if (!article) {
         throw {
           message: 'Article not found'
         }
       }
-    } catch(err) {
+    } catch (err) {
       return res.status(500).json({
         errors: {
           message: err.message
@@ -198,7 +220,7 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
 
     let authorDetails = await article.getAuthor();
 
-    if(authorDetails.user_id !== userDetails.user_id) {
+    if (authorDetails.user_id !== userDetails.user_id) {
       return res.status(403).json({
         error: {
           message: 'Article can only be updated by author'
@@ -206,16 +228,16 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
       })
     }
 
-    if(title) {
+    if (title) {
       article.title = title;
       article.slug = createSlug(title);
     }
 
-    if(description) {
+    if (description) {
       article.description = description;
     }
 
-    if(body) {
+    if (body) {
       article.body = body;
     }
 
@@ -236,7 +258,7 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
       return res.status(200).json({
         article: updatedArticle
       })
-    } catch(err) {
+    } catch (err) {
       res.status(500).json({
         errors: {
           message: err.message
@@ -260,7 +282,7 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
 
 route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   const decryptedToken = getIdFromToken(req.headers.token);
-  if(decryptedToken.error) {
+  if (decryptedToken.error) {
     return res.status(401).json({
       errors: {
         message: ["Invalid Token"]
@@ -271,33 +293,33 @@ route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   let userDetails;
   try {
     userDetails = await UserDetails.findByPk(decryptedToken.id);
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
-        errors: {
-          message: err.message
-        }
+      errors: {
+        message: err.message
+      }
     })
   }
 
   let article;
 
   try {
-    article  = await Article.findOne({
+    article = await Article.findOne({
       where: {
         slug: req.params.slug
       },
       include: [{
         model: UserDetails,
         as: 'author',
-        attributes: ['username','bio','image']
+        attributes: ['username', 'bio', 'image']
       }]
     })
-    if(!article) {
+    if (!article) {
       throw {
         message: 'Article not found'
       }
     }
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       errors: {
         message: err.message
@@ -306,7 +328,7 @@ route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   }
   const authorDetails = await article.getAuthor();
 
-  if(authorDetails.user_id === userDetails.user_id) {
+  if (authorDetails.user_id === userDetails.user_id) {
     return res.status(403).json({
       error: {
         message: 'Article can not be favorited by author'
@@ -317,7 +339,7 @@ route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   await article.addFavoritedBy(userDetails);
 
   let isFollowing = false;
-  if(userDetails) {
+  if (userDetails) {
     isFollowing = await authorDetails.hasFollower(userDetails);
   }
 
@@ -339,7 +361,7 @@ route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
 
 route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   const decryptedToken = getIdFromToken(req.headers.token);
-  if(decryptedToken.error) {
+  if (decryptedToken.error) {
     return res.status(401).json({
       errors: {
         message: ["Invalid Token"]
@@ -350,33 +372,33 @@ route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   let userDetails;
   try {
     userDetails = await UserDetails.findByPk(decryptedToken.id);
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
-        errors: {
-          message: err.message
-        }
+      errors: {
+        message: err.message
+      }
     })
   }
 
   let article;
 
   try {
-    article  = await Article.findOne({
+    article = await Article.findOne({
       where: {
         slug: req.params.slug
       },
       include: [{
         model: UserDetails,
         as: 'author',
-        attributes: ['username','bio','image']
+        attributes: ['username', 'bio', 'image']
       }]
     })
-    if(!article) {
+    if (!article) {
       throw {
         message: 'Article not found'
       }
     }
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       errors: {
         message: err.message
@@ -385,7 +407,7 @@ route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   }
   const authorDetails = await article.getAuthor();
 
-  if(authorDetails.user_id === userDetails.user_id) {
+  if (authorDetails.user_id === userDetails.user_id) {
     return res.status(403).json({
       error: {
         message: 'Article can not be unfavorited by author'
@@ -396,7 +418,7 @@ route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   await article.removeFavoritedBy(userDetails);
 
   let isFollowing = false;
-  if(userDetails) {
+  if (userDetails) {
     isFollowing = await authorDetails.hasFollower(userDetails);
   }
 
@@ -418,7 +440,7 @@ route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
 
 route.delete('/:slug', ensureTokenInHeader, async (req, res) => {
   const decryptedToken = getIdFromToken(req.headers.token);
-  if(decryptedToken.error) {
+  if (decryptedToken.error) {
     return res.status(401).json({
       errors: {
         message: ["Invalid Token"]
@@ -429,33 +451,33 @@ route.delete('/:slug', ensureTokenInHeader, async (req, res) => {
   let userDetails;
   try {
     userDetails = await UserDetails.findByPk(decryptedToken.id);
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
-        errors: {
-          message: err.message
-        }
+      errors: {
+        message: err.message
+      }
     })
   }
 
   let article;
 
   try {
-    article  = await Article.findOne({
+    article = await Article.findOne({
       where: {
         slug: req.params.slug
       },
       include: [{
         model: UserDetails,
         as: 'author',
-        attributes: ['username','bio','image']
+        attributes: ['username', 'bio', 'image']
       }]
     })
-    if(!article) {
+    if (!article) {
       throw {
         message: 'Article not found'
       }
     }
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       errors: {
         message: err.message
@@ -464,7 +486,7 @@ route.delete('/:slug', ensureTokenInHeader, async (req, res) => {
   }
   const authorDetails = await article.getAuthor();
 
-  if(authorDetails.user_id !== userDetails.user_id) {
+  if (authorDetails.user_id !== userDetails.user_id) {
     return res.status(403).json({
       error: {
         message: 'Article can only be deleted by author'
@@ -474,7 +496,7 @@ route.delete('/:slug', ensureTokenInHeader, async (req, res) => {
 
   try {
     await article.destroy()
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       errors: {
         message: err.message
@@ -483,6 +505,63 @@ route.delete('/:slug', ensureTokenInHeader, async (req, res) => {
   }
 
   return res.sendStatus(202);
+})
+
+route.post('/:slug/comments', ensureTokenInHeader, async (req, res) => {
+  const decryptedToken = getIdFromToken(req.headers.token);
+  if (decryptedToken.error) {
+    return res.status(401).json({
+      errors: {
+        message: ["Invalid Token"]
+      }
+    })
+  }
+
+  try {
+    let article = await Article.findOne({
+      where: {
+        slug: req.params.slug
+      }
+    })
+    if (!article) {
+      throw {
+        message: 'Article not found'
+      }
+    }
+
+
+    let userDetails = await UserDetails.findByPk(decryptedToken.id);
+
+    let comment = await Comment.create({
+      comment_id: generateUUID(),
+      body: req.body.comment.body
+    })
+
+    await comment.setWriter(userDetails);
+    await comment.setArticle(article);
+
+    return res.status(200).json({
+      comment: {
+        id: comment.comment_id,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        body: comment.body,
+        author: {
+          username: userDetails.username,
+          bio: userDetails.bio,
+          image: userDetails.image,
+          following: false
+        }
+      }
+    })
+
+  } catch (err) {
+    return res.status(500).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
 })
 
 module.exports = route;
