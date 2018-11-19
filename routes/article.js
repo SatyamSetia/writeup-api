@@ -416,4 +416,73 @@ route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   })
 })
 
+route.delete('/:slug', ensureTokenInHeader, async (req, res) => {
+  const decryptedToken = getIdFromToken(req.headers.token);
+  if(decryptedToken.error) {
+    return res.status(401).json({
+      errors: {
+        message: ["Invalid Token"]
+      }
+    })
+  }
+
+  let userDetails;
+  try {
+    userDetails = await UserDetails.findByPk(decryptedToken.id);
+  } catch(err) {
+    return res.status(500).json({
+        errors: {
+          message: err.message
+        }
+    })
+  }
+
+  let article;
+
+  try {
+    article  = await Article.findOne({
+      where: {
+        slug: req.params.slug
+      },
+      include: [{
+        model: UserDetails,
+        as: 'author',
+        attributes: ['username','bio','image']
+      }]
+    })
+    if(!article) {
+      throw {
+        message: 'Article not found'
+      }
+    }
+  } catch(err) {
+    return res.status(500).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
+  const authorDetails = await article.getAuthor();
+
+  if(authorDetails.user_id !== userDetails.user_id) {
+    return res.status(403).json({
+      error: {
+        message: 'Article can only be deleted by author'
+      }
+    })
+  }
+
+  try {
+    await article.destroy()
+  } catch(err) {
+    return res.status(500).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
+
+  return res.sendStatus(202);
+})
+
 module.exports = route;
