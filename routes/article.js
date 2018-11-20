@@ -148,16 +148,20 @@ route.get('/:slug', async (req, res) => {
   const authorDetails = await article.getAuthor();
 
   let isFollowing = false;
+  let isFavorited = false;
   if (userDetails) {
     isFollowing = await authorDetails.hasFollower(userDetails);
+    isFavorited = await article.hasFavoritedBy(userDetails);
   }
 
+  let favoritesCount = await article.countFavoritedBy();
   const tags = (await article.getTags()).map(tag => {
     return tag.tagName
   })
 
   article = article.toJSON();
-  article.favorited = false;
+  article.favorited = isFavorited;
+  article.favoritesCount = favoritesCount;
   article.tagList = tags;
   article.article_id = undefined;
   article.user_id = undefined;
@@ -219,6 +223,7 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
     }
 
     let authorDetails = await article.getAuthor();
+    let favoritesCount = await article.countFavoritedBy();
 
     if (authorDetails.user_id !== userDetails.user_id) {
       return res.status(403).json({
@@ -242,6 +247,7 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
     }
 
     try {
+      article.favoritesCount = favoritesCount
       let updatedArticle = await article.save();
 
       const tags = (await updatedArticle.getTags()).map(tag => {
@@ -343,9 +349,13 @@ route.get('/', async (req, res) => {
     for(let article of articles) {
       let authorDetails = await article.getAuthor();
 
+      let favoritesCount = await article.countFavoritedBy();
+
       let isFollowing = false;
+      let isFavorited = false;
       if (userDetails) {
         isFollowing = await authorDetails.hasFollower(userDetails);
+        isFavorited = await article.hasFavoritedBy(userDetails);
       }
 
       let tags = (await article.getTags()).map(tag => {
@@ -353,7 +363,8 @@ route.get('/', async (req, res) => {
       })
 
       article = article.toJSON();
-      article.favorited = false;
+      article.favorited = isFavorited;
+      article.favoritesCount = favoritesCount
       article.tagList = tags;
       article.article_id = undefined;
       article.user_id = undefined;
@@ -445,6 +456,7 @@ route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   }
 
   await article.addFavoritedBy(userDetails);
+  let favoritesCount = await article.countFavoritedBy();
 
   let isFollowing = false;
   if (userDetails) {
@@ -457,6 +469,7 @@ route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
 
   article = article.toJSON();
   article.favorited = true;
+  article.favoritesCount = favoritesCount;
   article.tagList = tags;
   article.article_id = undefined;
   article.user_id = undefined;
@@ -524,6 +537,7 @@ route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   }
 
   await article.removeFavoritedBy(userDetails);
+  let favoritesCount = await article.countFavoritedBy();
 
   let isFollowing = false;
   if (userDetails) {
@@ -536,6 +550,7 @@ route.delete('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
 
   article = article.toJSON();
   article.favorited = false;
+  article.favoritesCount = favoritesCount;
   article.tagList = tags;
   article.article_id = undefined;
   article.user_id = undefined;
