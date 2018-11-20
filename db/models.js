@@ -3,7 +3,7 @@ const DT = Sequelize.DataTypes;
 
 const UserModel = {
   user_id: DT.UUID,
-	password: {
+  password: {
     type: DT.STRING(45),
     allowNull: false
   }
@@ -20,7 +20,7 @@ const UserDetailModel = {
     unique: true,
     allowNull: false
   },
-	username: {
+  username: {
     type: DT.STRING(45),
     unique: true,
     allowNull: false

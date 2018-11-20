@@ -1,8 +1,10 @@
 const route = require('express').Router();
-const { Tags } = require('../db/index');
+const {
+  Tags
+} = require('../db/index');
 
 route.get('/', async (req, res) => {
-  try{
+  try {
     const tags = (await Tags.findAll()).map(tag => {
       return tag.tagName
     });
@@ -10,10 +12,10 @@ route.get('/', async (req, res) => {
     return res.status(200).json({
       tags
     })
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       error: {
-        message: err.mesage
+        message: err.message
       }
     })
   }

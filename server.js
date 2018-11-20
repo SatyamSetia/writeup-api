@@ -13,7 +13,7 @@ app.use(express.urlencoded({
 }))
 
 app.use(expressSession({
-	secret: config.sessionSecret,
+  secret: config.sessionSecret,
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -24,6 +24,6 @@ app.use('/api/profiles', require('./routes/profile'));
 app.use('/api/articles', require('./routes/article'));
 app.use('/api/tags', require('./routes/tag'));
 
-app.listen(8080,() => {
+app.listen(8080, () => {
   console.log('Server started on http://localhost:8080')
 })

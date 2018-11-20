@@ -276,13 +276,19 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
 
 route.get('/', async (req, res) => {
 
-  let {tag, author, favorited, limit, offset} = req.query;
+  let {
+    tag,
+    author,
+    favorited,
+    limit,
+    offset
+  } = req.query;
 
-  if(!limit) {
+  if (!limit) {
     limit = 20;
   }
 
-  if(!offset) {
+  if (!offset) {
     offset = 0;
   }
 
@@ -290,11 +296,11 @@ route.get('/', async (req, res) => {
     let userDetails = undefined;
     let favoritedByUserDetails = undefined;
 
-    if(req.headers.token) {
+    if (req.headers.token) {
 
       const decryptedToken = getIdFromToken(req.headers.token);
 
-      if(decryptedToken.error) {
+      if (decryptedToken.error) {
         return res.status(401).json({
           errors: {
             message: ["Invalid Token"]
@@ -307,14 +313,14 @@ route.get('/', async (req, res) => {
 
     let articles = [];
 
-    if(favorited) {
+    if (favorited) {
       favoritedByUserDetails = await UserDetails.findOne({
         where: {
           username: favorited
         }
       })
 
-      if(!favoritedByUserDetails) {
+      if (!favoritedByUserDetails) {
         return res.status(404).json({
           error: {
             message: 'User not found'
@@ -322,7 +328,7 @@ route.get('/', async (req, res) => {
         })
       }
       articles = await favoritedByUserDetails.getFavoritedArticles();
-    } else if(tag) {
+    } else if (tag) {
       let tagDetails = await Tags.findByPk(tag)
 
       articles = await tagDetails.getArticles();
@@ -346,7 +352,7 @@ route.get('/', async (req, res) => {
 
     let articleList = [];
 
-    for(let article of articles) {
+    for (let article of articles) {
       let authorDetails = await article.getAuthor();
 
       let favoritesCount = await article.countFavoritedBy();
@@ -368,7 +374,7 @@ route.get('/', async (req, res) => {
       article.tagList = tags;
       article.article_id = undefined;
       article.user_id = undefined;
-      if(favorited || tag) {
+      if (favorited || tag) {
         article.author = {
           username: authorDetails.username,
           bio: authorDetails.bio,
@@ -379,9 +385,9 @@ route.get('/', async (req, res) => {
       }
       article.author.following = isFollowing;
 
-      if(!author) {
+      if (!author) {
         articleList.push(article);
-      } else if(article.author.username === author) {
+      } else if (article.author.username === author) {
         articleList.push(article);
       }
     }
@@ -390,7 +396,7 @@ route.get('/', async (req, res) => {
       articlesCount: articleList.length
     })
 
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       errors: {
         message: err.message
@@ -676,11 +682,11 @@ route.get('/:slug/comments', async (req, res) => {
     let comments = await article.getComments();
 
     let commentList = [];
-    for(let comment of comments) {
+    for (let comment of comments) {
       let writer = await comment.getWriter();
 
       let isFollowing = false;
-      if(userDetails) {
+      if (userDetails) {
         isFollowing = await writer.hasFollower(userDetails);
       }
 
@@ -769,7 +775,7 @@ route.post('/:slug/comments', ensureTokenInHeader, async (req, res) => {
   }
 })
 
-route.delete('/:slug/comments/:id', ensureTokenInHeader,async (req, res) => {
+route.delete('/:slug/comments/:id', ensureTokenInHeader, async (req, res) => {
   const decryptedToken = getIdFromToken(req.headers.token);
   if (decryptedToken.error) {
     return res.status(401).json({
@@ -779,7 +785,7 @@ route.delete('/:slug/comments/:id', ensureTokenInHeader,async (req, res) => {
     })
   }
 
-  try{
+  try {
     let article = await Article.findOne({
       where: {
         slug: req.params.slug
@@ -795,10 +801,10 @@ route.delete('/:slug/comments/:id', ensureTokenInHeader,async (req, res) => {
 
     let comment = await Comment.findByPk(req.params.id)
 
-    if(await article.hasComment(comment)) {
+    if (await article.hasComment(comment)) {
       let writer = await comment.getWriter();
 
-      if(writer.username === userDetails.username) {
+      if (writer.username === userDetails.username) {
         comment.destroy()
         return res.sendStatus(202);
       } else {
@@ -815,7 +821,7 @@ route.delete('/:slug/comments/:id', ensureTokenInHeader,async (req, res) => {
         }
       })
     }
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       error: {
         message: err.message

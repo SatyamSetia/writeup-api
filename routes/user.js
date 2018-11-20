@@ -1,13 +1,28 @@
 const route = require('express').Router();
 
-const { User, UserDetails }  = require('../db/index');
-const { encryptPassword }  = require('../services/bcrypt');
-const { generateToken, getIdFromToken } = require('../services/jwt');
-const { generateUUID } = require('../services/uuidService');
-const  { validateUsername, validatePassword, validateEmail, ensureTokenInHeader } = require('../middlewares');
+const {
+  User,
+  UserDetails
+} = require('../db/index');
+const {
+  encryptPassword
+} = require('../services/bcrypt');
+const {
+  generateToken,
+  getIdFromToken
+} = require('../services/jwt');
+const {
+  generateUUID
+} = require('../services/uuidService');
+const {
+  validateUsername,
+  validatePassword,
+  validateEmail,
+  ensureTokenInHeader
+} = require('../middlewares');
 const passport = require('../auth');
 
-route.post('/users', validateUsername, validatePassword, validateEmail , async (req, res) => {
+route.post('/users', validateUsername, validatePassword, validateEmail, async (req, res) => {
 
   const userId = await generateUUID();
   const hashedPassword = encryptPassword(req.body.user.password);
@@ -36,7 +51,7 @@ route.post('/users', validateUsername, validatePassword, validateEmail , async (
         image: null
       }
     })
-  } catch(err) {
+  } catch (err) {
     res.status(500).json({
       errors: {
         message: err.message
@@ -58,13 +73,13 @@ route.get('/user', (req, res) => {
 
   let user_id, email;
 
-  if(req.user) {
+  if (req.user) {
     user_id = req.user.dataValues.user_id;
     email = req.user.dataValues.email
     req.session.destroy()
   } else {
     const decryptedToken = getIdFromToken(req.headers.token);
-    if(decryptedToken.error) {
+    if (decryptedToken.error) {
       return res.status(401).json({
         errors: {
           message: "Invalid Token"
@@ -76,7 +91,7 @@ route.get('/user', (req, res) => {
   }
 
   try {
-    UserDetails.findByPk(user_id).then( (userDetail) => {
+    UserDetails.findByPk(user_id).then((userDetail) => {
 
       const token = generateToken(user_id);
 
@@ -90,7 +105,7 @@ route.get('/user', (req, res) => {
         }
       })
     })
-  } catch(err) {
+  } catch (err) {
     return res.status(500).json({
       errors: {
         message: "Something went wrong"
@@ -105,10 +120,10 @@ route.get('/error', (req, res) => {
   });
 })
 
-route.put('/user',ensureTokenInHeader, validateUsername, validatePassword, async (req, res) => {
+route.put('/user', ensureTokenInHeader, validateUsername, validatePassword, async (req, res) => {
 
   const decryptedToken = getIdFromToken(req.headers.token);
-  if(decryptedToken.error) {
+  if (decryptedToken.error) {
     return res.status(401).json({
       errors: {
         message: "Invalid Token"
@@ -123,19 +138,19 @@ route.put('/user',ensureTokenInHeader, validateUsername, validatePassword, async
       }
     })
 
-    if(req.body.user.email) {
+    if (req.body.user.email) {
       userDetail.email = req.body.user.email
     }
-    if(req.body.user.password) {
+    if (req.body.user.password) {
       user.password = encryptPassword(req.body.user.password)
     }
-    if(req.body.user.username) {
+    if (req.body.user.username) {
       userDetail.username = req.body.user.username
     }
-    if(req.body.user.bio) {
+    if (req.body.user.bio) {
       userDetail.bio = req.body.user.bio
     }
-    if(req.body.user.image) {
+    if (req.body.user.image) {
       userDetail.image = req.body.user.image
     }
 
@@ -152,7 +167,7 @@ route.put('/user',ensureTokenInHeader, validateUsername, validatePassword, async
           image: updatedUserDetails.image
         }
       })
-    } catch(err) {
+    } catch (err) {
       res.status(500).json({
         errors: {
           message: err.message

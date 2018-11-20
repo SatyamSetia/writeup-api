@@ -1,7 +1,12 @@
 const route = require('express').Router();
 
-const { User, UserDetails }  = require('../db/index');
-const { getIdFromToken } = require('../services/jwt');
+const {
+  User,
+  UserDetails
+} = require('../db/index');
+const {
+  getIdFromToken
+} = require('../services/jwt');
 
 route.get('/:username', async (req, res) => {
 
@@ -14,12 +19,12 @@ route.get('/:username', async (req, res) => {
       }
     });
 
-    if(!followingUserDetails) {
+    if (!followingUserDetails) {
       throw {
         message: `User with username ${req.params.username} does not exists`
       }
     }
-  } catch(err) {
+  } catch (err) {
     return res.status(400).json({
       errors: {
         message: err.message
@@ -27,11 +32,11 @@ route.get('/:username', async (req, res) => {
     })
   }
 
-  if(req.headers.token) {
+  if (req.headers.token) {
 
     const decryptedToken = getIdFromToken(req.headers.token);
 
-    if(decryptedToken.error) {
+    if (decryptedToken.error) {
       return res.status(401).json({
         errors: {
           message: "Invalid Token"
@@ -49,7 +54,7 @@ route.get('/:username', async (req, res) => {
 
         isFollowing = await followingUser.hasFollower(followerUser);
 
-      } catch(err) {
+      } catch (err) {
         return res.status(500).json({
           errors: {
             message: err.message
@@ -82,12 +87,12 @@ route.get('/:username', async (req, res) => {
 
 route.post('/:username/follow', async (req, res) => {
 
-  if(req.headers.token) {
+  if (req.headers.token) {
     let user_id;
 
     const decryptedToken = getIdFromToken(req.headers.token);
 
-    if(decryptedToken.error) {
+    if (decryptedToken.error) {
       return res.status(401).json({
         errors: {
           message: "Invalid Token"
@@ -116,7 +121,7 @@ route.post('/:username/follow', async (req, res) => {
           following: true
         }
       })
-    } catch(err) {
+    } catch (err) {
       return res.status(500).json({
         errors: {
           message: "Something went wrong"
@@ -135,12 +140,12 @@ route.post('/:username/follow', async (req, res) => {
 
 route.delete('/:username/follow', async (req, res) => {
 
-  if(req.headers.token) {
+  if (req.headers.token) {
     let user_id;
 
     const decryptedToken = getIdFromToken(req.headers.token);
 
-    if(decryptedToken.error) {
+    if (decryptedToken.error) {
       return res.status(401).json({
         errors: {
           message: ["Invalid Token"]
@@ -169,7 +174,7 @@ route.delete('/:username/follow', async (req, res) => {
           following: false
         }
       })
-    } catch(err) {
+    } catch (err) {
       return res.status(500).json({
         errors: {
           message: "Something went wrong"

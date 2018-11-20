@@ -11,7 +11,7 @@ function uniqueString() {
 }
 
 function createSlug(str) {
-  return slug(str,'_') + "_" + uniqueString();
+  return slug(str, '_') + "_" + uniqueString();
 }
 
 module.exports = {
