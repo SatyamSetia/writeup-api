@@ -4,20 +4,20 @@ const { User, UserDetails }  = require('../db/index');
 const { encryptPassword }  = require('../services/bcrypt');
 const { generateToken, getIdFromToken } = require('../services/jwt');
 const { generateUUID } = require('../services/uuidService');
-const  { validateUsername, validatePassword, validateEmail } = require('../middlewares');
+const  { validateUsername, validatePassword, validateEmail, ensureTokenInHeader } = require('../middlewares');
 const passport = require('../auth');
 
 route.post('/users', validateUsername, validatePassword, validateEmail , async (req, res) => {
 
   const userId = await generateUUID();
-  const hashedPassword = encryptPassword(req.body.password);
+  const hashedPassword = encryptPassword(req.body.user.password);
 
   try {
 
     const newUserDetails = await UserDetails.create({
       user_id: userId,
-      email: req.body.email,
-      username: req.body.username
+      email: req.body.user.email,
+      username: req.body.user.username
     })
 
     const newUser = await User.create({
@@ -105,7 +105,7 @@ route.get('/error', (req, res) => {
   });
 })
 
-route.put('/user', validateUsername, validatePassword, async (req, res) => {
+route.put('/user',ensureTokenInHeader, validateUsername, validatePassword, async (req, res) => {
 
   const decryptedToken = getIdFromToken(req.headers.token);
   if(decryptedToken.error) {
@@ -123,20 +123,20 @@ route.put('/user', validateUsername, validatePassword, async (req, res) => {
       }
     })
 
-    if(req.body.email) {
-      userDetail.email = req.body.email
+    if(req.body.user.email) {
+      userDetail.email = req.body.user.email
     }
-    if(req.body.password) {
-      user.password = encryptPassword(req.body.password)
+    if(req.body.user.password) {
+      user.password = encryptPassword(req.body.user.password)
     }
-    if(req.body.username) {
-      userDetail.username = req.body.username
+    if(req.body.user.username) {
+      userDetail.username = req.body.user.username
     }
-    if(req.body.bio) {
-      userDetail.bio = req.body.bio
+    if(req.body.user.bio) {
+      userDetail.bio = req.body.user.bio
     }
-    if(req.body.image) {
-      userDetail.image = req.body.image
+    if(req.body.user.image) {
+      userDetail.image = req.body.user.image
     }
 
     try {
