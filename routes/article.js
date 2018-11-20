@@ -25,7 +25,7 @@ route.post('/', ensureTokenInHeader, async (req, res) => {
   if (decryptedToken.error) {
     return res.status(401).json({
       errors: {
-        message: ["Invalid Token"]
+        message: "Invalid Token"
       }
     })
   } else {
@@ -103,7 +103,7 @@ route.get('/:slug', async (req, res) => {
     if (decryptedToken.error) {
       return res.status(401).json({
         errors: {
-          message: ["Invalid Token"]
+          message: "Invalid Token"
         }
       })
     }
@@ -173,7 +173,7 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
   if (decryptedToken.error) {
     return res.status(401).json({
       errors: {
-        message: ["Invalid Token"]
+        message: "Invalid Token"
       }
     })
   } else {
@@ -222,7 +222,7 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
 
     if (authorDetails.user_id !== userDetails.user_id) {
       return res.status(403).json({
-        error: {
+        errors: {
           message: 'Article can only be updated by author'
         }
       })

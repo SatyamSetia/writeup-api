@@ -67,7 +67,7 @@ route.get('/user', (req, res) => {
     if(decryptedToken.error) {
       return res.status(401).json({
         errors: {
-          message: ["Invalid Token"]
+          message: "Invalid Token"
         }
       })
     } else {
@@ -93,7 +93,7 @@ route.get('/user', (req, res) => {
   } catch(err) {
     return res.status(500).json({
       errors: {
-        message: ["Something went wrong"]
+        message: "Something went wrong"
       }
     })
   }
@@ -111,7 +111,7 @@ route.put('/user',ensureTokenInHeader, validateUsername, validatePassword, async
   if(decryptedToken.error) {
     return res.status(401).json({
       errors: {
-        message: ["Invalid Token"]
+        message: "Invalid Token"
       }
     })
   } else {

@@ -69,7 +69,7 @@ const validateEmail = (req, res, next) => {
 const ensureTokenInHeader = (req, res, next) => {
   if(!req.headers.token) {
     return res.status(401).json({
-      error: {
+      errors: {
         message: 'Unauthorized Access. Token is absent in headers'
       }
     })

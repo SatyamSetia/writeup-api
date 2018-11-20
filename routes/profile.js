@@ -34,7 +34,7 @@ route.get('/:username', async (req, res) => {
     if(decryptedToken.error) {
       return res.status(401).json({
         errors: {
-          message: ["Invalid Token"]
+          message: "Invalid Token"
         }
       })
     } else {
@@ -90,7 +90,7 @@ route.post('/:username/follow', async (req, res) => {
     if(decryptedToken.error) {
       return res.status(401).json({
         errors: {
-          message: ["Invalid Token"]
+          message: "Invalid Token"
         }
       })
     } else {
@@ -119,7 +119,7 @@ route.post('/:username/follow', async (req, res) => {
     } catch(err) {
       return res.status(500).json({
         errors: {
-          message: ["Something went wrong"]
+          message: "Something went wrong"
         }
       })
     }
@@ -127,7 +127,7 @@ route.post('/:username/follow', async (req, res) => {
   } else {
     return res.status(401).json({
       errors: {
-        message: ["Unauthorized access not allowed. Token required"]
+        message: "Unauthorized access not allowed. Token required"
       }
     })
   }
@@ -172,7 +172,7 @@ route.delete('/:username/follow', async (req, res) => {
     } catch(err) {
       return res.status(500).json({
         errors: {
-          message: ["Something went wrong"]
+          message: "Something went wrong"
         }
       })
     }
@@ -180,7 +180,7 @@ route.delete('/:username/follow', async (req, res) => {
   } else {
     return res.status(401).json({
       errors: {
-        message: ["Unauthorized access not allowed. Token required"]
+        message: "Unauthorized access not allowed. Token required"
       }
     })
   }
