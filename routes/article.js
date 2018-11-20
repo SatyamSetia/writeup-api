@@ -268,17 +268,125 @@ route.put('/:slug', ensureTokenInHeader, async (req, res) => {
   }
 })
 
-// route.get('/', (req, res) => {
-//   try {
-//
-//   } catch(err) {
-//     return res.status(500).json({
-//       errors: {
-//         message: err.message
-//       }
-//     })
-//   }
-// })
+route.get('/', async (req, res) => {
+
+  let {tag, author, favorited, limit, offset} = req.query;
+
+  if(!limit) {
+    limit = 20;
+  }
+
+  if(!offset) {
+    offset = 0;
+  }
+
+  try {
+    let userDetails = undefined;
+    let favoritedByUserDetails = undefined;
+
+    if(req.headers.token) {
+
+      const decryptedToken = getIdFromToken(req.headers.token);
+
+      if(decryptedToken.error) {
+        return res.status(401).json({
+          errors: {
+            message: ["Invalid Token"]
+          }
+        })
+      }
+
+      userDetails = await UserDetails.findByPk(decryptedToken.id);
+    }
+
+    let articles = [];
+
+    if(favorited) {
+      favoritedByUserDetails = await UserDetails.findOne({
+        where: {
+          username: favorited
+        }
+      })
+
+      if(!favoritedByUserDetails) {
+        return res.status(404).json({
+          error: {
+            message: 'User not found'
+          }
+        })
+      }
+      articles = await favoritedByUserDetails.getFavoritedArticles();
+    } else if(tag) {
+      let tagDetails = await Tags.findByPk(tag)
+
+      articles = await tagDetails.getArticles();
+    } else {
+      articles = await Article.findAll({
+        include: [{
+          model: UserDetails,
+          as: 'author',
+          attributes: ['username', 'bio', 'image']
+        }],
+        limit: limit,
+        offset: offset
+      });
+    }
+
+    if (!articles) {
+      throw {
+        message: 'Articles not found'
+      }
+    }
+
+    let articleList = [];
+
+    for(let article of articles) {
+      let authorDetails = await article.getAuthor();
+
+      let isFollowing = false;
+      if (userDetails) {
+        isFollowing = await authorDetails.hasFollower(userDetails);
+      }
+
+      let tags = (await article.getTags()).map(tag => {
+        return tag.tagName
+      })
+
+      article = article.toJSON();
+      article.favorited = false;
+      article.tagList = tags;
+      article.article_id = undefined;
+      article.user_id = undefined;
+      if(favorited || tag) {
+        article.author = {
+          username: authorDetails.username,
+          bio: authorDetails.bio,
+          image: authorDetails.image
+        }
+        article.Favorite = undefined
+        article.ArticleTag = undefined
+      }
+      article.author.following = isFollowing;
+
+      if(!author) {
+        articleList.push(article);
+      } else if(article.author.username === author) {
+        articleList.push(article);
+      }
+    }
+    return res.status(200).json({
+      articles: articleList,
+      articlesCount: articleList.length
+    })
+
+  } catch(err) {
+    return res.status(500).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
+})
 
 route.post('/:slug/favorite', ensureTokenInHeader, async (req, res) => {
   const decryptedToken = getIdFromToken(req.headers.token);
