@@ -615,6 +615,88 @@ route.delete('/:slug', ensureTokenInHeader, async (req, res) => {
   return res.sendStatus(202);
 })
 
+route.get('/:slug/comments', async (req, res) => {
+  let userDetails = undefined;
+
+  if (req.headers.token) {
+    const decryptedToken = getIdFromToken(req.headers.token);
+    if (decryptedToken.error) {
+      return res.status(401).json({
+        errors: {
+          message: ["Invalid Token"]
+        }
+      })
+    }
+
+    try {
+      userDetails = await UserDetails.findByPk(decryptedToken.id);
+    } catch (err) {
+      return res.status(500).json({
+        errors: {
+          message: err.message
+        }
+      })
+    }
+  }
+
+  let article;
+
+  try {
+    article = await Article.findOne({
+      where: {
+        slug: req.params.slug
+      },
+      include: [{
+        model: UserDetails,
+        as: 'author',
+        attributes: ['username', 'bio', 'image']
+      }]
+    })
+    if (!article) {
+      throw {
+        message: 'Article not found'
+      }
+    }
+
+    let comments = await article.getComments();
+
+    let commentList = [];
+    for(let comment of comments) {
+      let writer = await comment.getWriter();
+
+      let isFollowing = false;
+      if(userDetails) {
+        isFollowing = await writer.hasFollower(userDetails);
+      }
+
+      comment = comment.toJSON();
+      comment.article_id = undefined
+      comment.user_id = undefined
+      comment.id = comment.comment_id
+      comment.comment_id = undefined
+      comment.author = {
+        username: writer.username,
+        bio: writer.bio,
+        image: writer.image,
+        following: isFollowing,
+      }
+
+      commentList.push(comment);
+    }
+
+    return res.status(200).json({
+      comments: commentList
+    })
+  } catch (err) {
+    return res.status(500).json({
+      errors: {
+        message: err.message
+      }
+    })
+  }
+
+})
+
 route.post('/:slug/comments', ensureTokenInHeader, async (req, res) => {
   const decryptedToken = getIdFromToken(req.headers.token);
   if (decryptedToken.error) {
