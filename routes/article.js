@@ -672,4 +672,60 @@ route.post('/:slug/comments', ensureTokenInHeader, async (req, res) => {
   }
 })
 
+route.delete('/:slug/comments/:id', ensureTokenInHeader,async (req, res) => {
+  const decryptedToken = getIdFromToken(req.headers.token);
+  if (decryptedToken.error) {
+    return res.status(401).json({
+      errors: {
+        message: ["Invalid Token"]
+      }
+    })
+  }
+
+  try{
+    let article = await Article.findOne({
+      where: {
+        slug: req.params.slug
+      }
+    })
+    if (!article) {
+      throw {
+        message: 'Article not found'
+      }
+    }
+
+    let userDetails = await UserDetails.findByPk(decryptedToken.id);
+
+    let comment = await Comment.findByPk(req.params.id)
+
+    if(await article.hasComment(comment)) {
+      let writer = await comment.getWriter();
+
+      if(writer.username === userDetails.username) {
+        comment.destroy()
+        return res.sendStatus(202);
+      } else {
+        return res.status(403).json({
+          error: {
+            message: 'Comment can only be deleted by its writer'
+          }
+        })
+      }
+    } else {
+      return res.status(403).json({
+        error: {
+          message: 'Comment can only be deleted by its writer'
+        }
+      })
+    }
+  } catch(err) {
+    return res.status(500).json({
+      error: {
+        message: err.message
+      }
+    })
+  }
+
+})
+
 module.exports = route;
